@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Quote Builder" />
+<meta name="theme-color" content="#F3ECE1" />
+<title>CupidsHunni · Quote Builder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #F3ECE1;
+    font-family: 'Inter', sans-serif;
+    padding: 40px 20px;
+    color: #2A2420;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .eyebrow {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .08em;
+    color: #A63D5C; margin-bottom: 10px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: clamp(26px, 6vw, 42px); margin: 0 0 10px 0; letter-spacing: -0.01em;
+  }
+  .sub { font-size: 15px; color: #6B5D4F; max-width: 560px; line-height: 1.5; margin: 0 0 32px 0; }
+  .grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: start; }
+  .panel { background: #FFFDF9; border: 1px solid #E3D5C4; border-radius: 14px; padding: 26px 26px 22px; }
+
+  /* Tablet & phone */
+  @media (max-width: 760px) {
+    body { padding: 24px 14px 60px; }
+    .grid { grid-template-columns: 1fr; gap: 20px; }
+    .panel { padding: 20px 18px 18px; border-radius: 12px; }
+    .receipt-wrap { position: static; }
+    .receipt { transform: none; padding: 22px 18px; }
+    .opt-btn, .row-btn, .seg-btn { padding: 12px 14px; font-size: 14px; }
+    .step-btn { width: 34px; height: 34px; font-size: 18px; }
+    .toggle { min-height: 40px; }
+  }
+  @media (max-width: 420px) {
+    .stepper-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+  .field { margin-bottom: 22px; }
+  .field-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .field-label { font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: #4A4038; text-transform: uppercase; }
+  .info-btn { border: none; background: none; color: #A63D5C; opacity: .6; cursor: pointer; padding: 0; font-size: 13px; }
+  .info-btn:hover { opacity: 1; }
+  .info-text { font-size: 12.5px; color: #8A7A68; margin-top: 8px; line-height: 1.5; font-style: italic; }
+  .rate-row { display: flex; align-items: center; border: 1px solid #E3D5C4; border-radius: 10px; padding: 8px 14px; background: #FAF6F0; width: 160px; }
+  .dollar { font-family: 'Space Mono', monospace; font-size: 16px; color: #A63D5C; margin-right: 4px; }
+  .rate-input { border: none; background: transparent; font-family: 'Space Mono', monospace; font-size: 18px; width: 60px; outline: none; color: #2A2420; }
+  input[type="number"], input[type="range"] { font-size: 16px; } /* iOS: prevents auto-zoom on focus */
+  .per-hour { font-size: 12px; color: #8A7A68; }
+  .opt-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opt-btn { border: 1px solid #E3D5C4; background: #FAF6F0; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #4A4038; font-family: 'Inter', sans-serif; cursor: pointer; transition: all .15s ease; }
+  .opt-btn:hover { border-color: #A63D5C; }
+  .opt-btn.active { background: #2A2420; color: #FAF6F0; border-color: #2A2420; }
+  .stack { display: flex; flex-direction: column; gap: 8px; }
+  .row-btn { display: flex; justify-content: space-between; align-items: center; border: 1px solid #E3D5C4; background: #FAF6F0; border-radius: 8px; padding: 10px 14px; font-size: 13.5px; color: #4A4038; font-family: 'Inter', sans-serif; width: 100%; text-align: left; cursor: pointer; transition: all .15s ease; }
+  .row-btn:hover { border-color: #A63D5C; }
+  .row-btn.active { background: #F6E9EC; border-color: #A63D5C; color: #2A2420; }
+  .mult-badge { font-family: 'Space Mono', monospace; font-size: 12px; color: #A63D5C; font-weight: 700; }
+  .segmented { display: flex; border: 1px solid #E3D5C4; border-radius: 8px; overflow: hidden; }
+  .seg-btn { flex: 1; border: none; background: #FAF6F0; padding: 9px 8px; font-size: 12.5px; color: #4A4038; border-right: 1px solid #E3D5C4; cursor: pointer; font-family: 'Inter', sans-serif; }
+  .seg-btn:last-child { border-right: none; }
+  .seg-btn.active { background: #2A2420; color: #FAF6F0; }
+  input[type="range"] { width: 100%; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: #E3D5C4; outline: none; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #A63D5C; cursor: pointer; border: 2px solid #FAF6F0; box-shadow: 0 0 0 1px #A63D5C; }
+  input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #A63D5C; cursor: pointer; border: 2px solid #FAF6F0; }
+  .toggle { position: relative; display: flex; align-items: center; height: 30px; border-radius: 15px; border: none; padding: 0 12px; cursor: pointer; width: fit-content; min-width: 160px; background: #EFE6D8; }
+  .toggle.on { background: #A63D5C; }
+  .toggle-dot { position: absolute; left: 2px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .18s ease; }
+  .toggle.on .toggle-dot { transform: translateX(20px); }
+  .toggle-text { font-size: 12.5px; font-weight: 600; margin-left: 32px; color: #6B5D4F; }
+  .toggle.on .toggle-text { margin-left: 10px; color: #fff; }
+  .stepper-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .stepper { display: flex; align-items: center; gap: 12px; }
+  .step-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #E3D5C4; background: #FAF6F0; font-size: 16px; color: #2A2420; cursor: pointer; line-height: 1; }
+  .step-val { font-family: 'Space Mono', monospace; font-size: 15px; width: 16px; text-align: center; display: inline-block; }
+  .round-price-row { display: flex; align-items: center; gap: 6px; }
+  .small-label { font-size: 12px; color: #8A7A68; }
+  .round-input { border: 1px solid #E3D5C4; border-radius: 6px; padding: 5px 8px; width: 54px; font-family: 'Space Mono', monospace; font-size: 13px; }
+  .reset-btn { display: flex; align-items: center; gap: 6px; border: none; background: none; color: #8A7A68; font-size: 12.5px; cursor: pointer; padding: 0; margin-top: 4px; }
+  .receipt-wrap { position: sticky; top: 20px; }
+  .receipt { background: #FFFDF7; border: 1px solid #E3D5C4; border-radius: 4px; padding: 26px 22px; box-shadow: 0 8px 24px rgba(42,36,32,.08); transform: rotate(.6deg); font-family: 'Space Mono', monospace; }
+  .receipt-header { text-align: center; margin-bottom: 4px; }
+  .receipt-brand { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; }
+  .receipt-sub { font-size: 10.5px; letter-spacing: .12em; color: #8A7A68; margin-top: 2px; }
+  .dashes { border-top: 1.5px dashed #D9C9B5; margin: 14px 0; }
+  .line-item { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; }
+  .line-label { font-size: 12.5px; color: #2A2420; }
+  .line-sub { font-size: 10.5px; color: #A0907C; margin-top: 2px; }
+  .line-value { font-size: 12.5px; white-space: nowrap; }
+  .line-value.dim { opacity: .55; }
+  .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
+  .total-label { font-size: 13px; letter-spacing: .08em; font-weight: 700; }
+  .total-value { font-size: 26px; font-weight: 700; color: #A63D5C; }
+  .receipt-footer { text-align: center; font-size: 10px; color: #A0907C; line-height: 1.6; margin-top: 12px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">♡ CUPIDSHUNNI · QUOTE BUILDER</div>
+    <h1>What should you charge?</h1>
+    <p class="sub">Set your rate once, then let scope, usage, and rush decide the rest — so every quote is consistent, not a guess.</p>
+
+    <div class="grid">
+      <!-- LEFT PANEL -->
+      <div class="panel">
+        <div class="field">
+          <div class="field-label-row"><label class="field-label">Your hourly rate</label></div>
+          <div class="rate-row">
+            <span class="dollar">$</span>
+            <input class="rate-input" type="number" min="0" id="hourlyRate" value="35" />
+            <span class="per-hour">/ hr</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label class="field-label">Project type</label>
+            <button class="info-btn" onclick="toggleInfo('type')">ⓘ</button>
+          </div>
+          <div class="opt-grid" id="projectGrid"></div>
+          <p class="info-text" id="info-type" style="display:none;">Each type loads a starting hour estimate below — adjust it for the actual piece.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row"><label class="field-label" id="hoursLabel">Estimated hours — 6h</label></div>
+          <input type="range" id="hoursSlider" min="0.5" max="30" step="0.5" value="6" />
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label class="field-label">Usage / licensing</label>
+            <button class="info-btn" onclick="toggleInfo('usage')">ⓘ</button>
+          </div>
+          <div class="stack" id="usageStack"></div>
+          <p class="info-text" id="info-usage" style="display:none;"></p>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row"><label class="field-label">Complexity</label></div>
+          <div class="segmented" id="complexitySeg"></div>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row"><label class="field-label">Rush turnaround</label></div>
+          <button class="toggle" id="rushToggle" onclick="toggleRush()">
+            <span class="toggle-dot"></span>
+            <span class="toggle-text">Standard timeline</span>
+          </button>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row"><label class="field-label">Extra revision rounds (2 included free)</label></div>
+          <div class="stepper-row">
+            <div class="stepper">
+              <button class="step-btn" onclick="stepRounds(-1)">−</button>
+              <span class="step-val" id="roundsVal">0</span>
+              <button class="step-btn" onclick="stepRounds(1)">+</button>
+            </div>
+            <div class="round-price-row">
+              <span class="small-label">per round $</span>
+              <input class="round-input" type="number" min="0" id="roundPrice" value="40" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row"><label class="field-label">Friends & growing-together rate</label></div>
+          <button class="toggle" id="friendToggle" onclick="toggleFriend()">
+            <span class="toggle-dot"></span>
+            <span class="toggle-text">Standard rate</span>
+          </button>
+        </div>
+
+        <button class="reset-btn" onclick="resetAll()">↺ Reset to defaults</button>
+      </div>
+
+      <!-- RIGHT RECEIPT -->
+      <div class="receipt-wrap">
+        <div class="receipt">
+          <div class="receipt-header">
+            <div class="receipt-brand">CupidsHunni Creative</div>
+            <div class="receipt-sub">PROJECT QUOTE</div>
+          </div>
+          <div class="dashes"></div>
+          <div id="lineItems"></div>
+          <div class="dashes"></div>
+          <div id="friendLine"></div>
+          <div class="total-row">
+            <span class="total-label">TOTAL</span>
+            <span class="total-value" id="totalValue">$0</span>
+          </div>
+          <div class="dashes"></div>
+          <div class="receipt-footer">Estimate only · terms confirmed on final invoice<br/>thank you for creating with me ♡</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const PROJECT_TYPES = [
+  { id: "illustration", label: "Custom illustration (single piece)", hours: 6 },
+  { id: "logo", label: "Logo / brand mark", hours: 8 },
+  { id: "packaging", label: "Packaging or label design", hours: 10 },
+  { id: "sticker", label: "Sticker / small merch design", hours: 3 },
+  { id: "character", label: "Character design", hours: 8 },
+  { id: "pattern", label: "Digital pattern / tile", hours: 4 },
+  { id: "social", label: "Social content piece", hours: 2 },
+];
+const USAGE = [
+  { id: "personal", label: "Personal / non-commercial", mult: 1, note: "Client won't sell or promote a business with it." },
+  { id: "small", label: "Small business commercial", mult: 1.5, note: "Local use — packaging, one product line, small shop." },
+  { id: "broad", label: "Broad commercial / advertising", mult: 2.5, note: "Wide distribution, paid ads, multiple platforms." },
+  { id: "buyout", label: "Exclusive rights / full buyout", mult: 4, note: "Client owns it outright — you can't reuse or resell it." },
+];
+const COMPLEXITY = [
+  { id: "simple", label: "Simple", mult: 0.8 },
+  { id: "moderate", label: "Moderate", mult: 1 },
+  { id: "detailed", label: "Detailed / highly rendered", mult: 1.4 },
+];
+
+let state = {
+  projectId: "illustration",
+  hours: 6,
+  usageId: "small",
+  complexityId: "moderate",
+  rush: false,
+  extraRounds: 0,
+  friendRate: false,
+};
+
+function fmt(n) {
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
+function toggleInfo(key) {
+  const el = document.getElementById('info-' + key);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderProjectGrid() {
+  const grid = document.getElementById('projectGrid');
+  grid.innerHTML = '';
+  PROJECT_TYPES.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn' + (p.id === state.projectId ? ' active' : '');
+    btn.textContent = p.label;
+    btn.onclick = () => {
+      state.projectId = p.id;
+      state.hours = p.hours;
+      document.getElementById('hoursSlider').value = p.hours;
+      renderAll();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function renderUsageStack() {
+  const stack = document.getElementById('usageStack');
+  stack.innerHTML = '';
+  USAGE.forEach(u => {
+    const btn = document.createElement('button');
+    btn.className = 'row-btn' + (u.id === state.usageId ? ' active' : '');
+    btn.innerHTML = `<span>${u.label}</span><span class="mult-badge">×${u.mult}</span>`;
+    btn.onclick = () => { state.usageId = u.id; renderAll(); };
+    stack.appendChild(btn);
+  });
+  const infoEl = document.getElementById('info-usage');
+  const current = USAGE.find(u => u.id === state.usageId);
+  infoEl.textContent = current.note + " This is the single biggest lever in illustration pricing — wider use, higher price.";
+}
+
+function renderComplexitySeg() {
+  const seg = document.getElementById('complexitySeg');
+  seg.innerHTML = '';
+  COMPLEXITY.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'seg-btn' + (c.id === state.complexityId ? ' active' : '');
+    btn.textContent = c.label;
+    btn.onclick = () => { state.complexityId = c.id; renderAll(); };
+    seg.appendChild(btn);
+  });
+}
+
+function stepRounds(delta) {
+  state.extraRounds = Math.max(0, Math.min(10, state.extraRounds + delta));
+  renderAll();
+}
+
+function toggleRush() {
+  state.rush = !state.rush;
+  const btn = document.getElementById('rushToggle');
+  btn.classList.toggle('on', state.rush);
+  btn.querySelector('.toggle-text').textContent = state.rush ? 'Rush (+25%)' : 'Standard timeline';
+  renderAll();
+}
+
+function toggleFriend() {
+  state.friendRate = !state.friendRate;
+  const btn = document.getElementById('friendToggle');
+  btn.classList.toggle('on', state.friendRate);
+  btn.querySelector('.toggle-text').textContent = state.friendRate ? 'Discounted 50%' : 'Standard rate';
+  renderAll();
+}
+
+function resetAll() {
+  state = { projectId: "illustration", hours: 6, usageId: "small", complexityId: "moderate", rush: false, extraRounds: 0, friendRate: false };
+  document.getElementById('hourlyRate').value = 35;
+  document.getElementById('roundPrice').value = 40;
+  document.getElementById('hoursSlider').value = 6;
+  document.getElementById('rushToggle').classList.remove('on');
+  document.getElementById('rushToggle').querySelector('.toggle-text').textContent = 'Standard timeline';
+  document.getElementById('friendToggle').classList.remove('on');
+  document.getElementById('friendToggle').querySelector('.toggle-text').textContent = 'Standard rate';
+  renderAll();
+}
+
+function renderAll() {
+  renderProjectGrid();
+  renderUsageStack();
+  renderComplexitySeg();
+  document.getElementById('roundsVal').textContent = state.extraRounds;
+  document.getElementById('hoursLabel').textContent = `Estimated hours — ${state.hours}h`;
+
+  const hourlyRate = Math.max(0, Number(document.getElementById('hourlyRate').value) || 0);
+  const roundPrice = Math.max(0, Number(document.getElementById('roundPrice').value) || 0);
+  const project = PROJECT_TYPES.find(p => p.id === state.projectId);
+  const usage = USAGE.find(u => u.id === state.usageId);
+  const complexity = COMPLEXITY.find(c => c.id === state.complexityId);
+
+  const base = hourlyRate * state.hours;
+  const afterComplexity = base * complexity.mult;
+  const afterUsage = afterComplexity * usage.mult;
+  const rushFee = state.rush ? afterUsage * 0.25 : 0;
+  const revisionFee = state.extraRounds * roundPrice;
+  const total = afterUsage + rushFee + revisionFee;
+  const friendDiscount = state.friendRate ? total * 0.5 : 0;
+  const finalTotal = total - friendDiscount;
+
+  const lineItems = document.getElementById('lineItems');
+  let html = '';
+  html += lineItem(project.label, `${state.hours}h × $${hourlyRate}/hr`, fmt(base));
+  html += lineItem('Complexity', `${complexity.label} (×${complexity.mult})`, fmt(afterComplexity), true);
+  html += lineItem('Usage / licensing', `${usage.label} (×${usage.mult})`, fmt(afterUsage), true);
+  if (state.rush) html += lineItem('Rush fee', '+25%', `+ ${fmt(rushFee)}`);
+  if (state.extraRounds > 0) html += lineItem('Extra revisions', `${state.extraRounds} round${state.extraRounds > 1 ? 's' : ''} × $${roundPrice}`, `+ ${fmt(revisionFee)}`);
+  lineItems.innerHTML = html;
+
+  const friendLine = document.getElementById('friendLine');
+  friendLine.innerHTML = state.friendRate ? lineItem('Friends & growing-together', '−50%', `− ${fmt(friendDiscount)}`) : '';
+
+  document.getElementById('totalValue').textContent = fmt(finalTotal);
+}
+
+function lineItem(label, sub, value, dim) {
+  return `<div class="line-item">
+    <div><div class="line-label">${label}</div><div class="line-sub">${sub}</div></div>
+    <div class="line-value${dim ? ' dim' : ''}">${value}</div>
+  </div>`;
+}
+
+document.getElementById('hourlyRate').addEventListener('input', renderAll);
+document.getElementById('roundPrice').addEventListener('input', renderAll);
+document.getElementById('hoursSlider').addEventListener('input', (e) => {
+  state.hours = Number(e.target.value);
+  renderAll();
+});
+
+renderAll();
+</script>
+</body>
+</html>
