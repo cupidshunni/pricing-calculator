@@ -53,6 +53,8 @@
   .info-btn { border: none; background: none; color: #A63D5C; opacity: .6; cursor: pointer; padding: 0; font-size: 13px; }
   .info-btn:hover { opacity: 1; }
   .info-text { font-size: 12.5px; color: #8A7A68; margin-top: 8px; line-height: 1.5; font-style: italic; }
+  .client-input { width: 100%; border: 1px solid #E3D5C4; border-radius: 10px; padding: 10px 14px; background: #FAF6F0; font-family: 'Inter', sans-serif; font-size: 14px; color: #2A2420; outline: none; }
+  .client-input:focus { border-color: #A63D5C; }
   .rate-row { display: flex; align-items: center; border: 1px solid #E3D5C4; border-radius: 10px; padding: 8px 14px; background: #FAF6F0; width: 160px; }
   .dollar { font-family: 'Space Mono', monospace; font-size: 16px; color: #A63D5C; margin-right: 4px; }
   .rate-input { border: none; background: transparent; font-family: 'Space Mono', monospace; font-size: 18px; width: 60px; outline: none; color: #2A2420; }
@@ -103,6 +105,20 @@
   .total-label { font-size: 13px; letter-spacing: .08em; font-weight: 700; }
   .total-value { font-size: 26px; font-weight: 700; color: #A63D5C; }
   .receipt-footer { text-align: center; font-size: 10px; color: #A0907C; line-height: 1.6; margin-top: 12px; }
+  .copy-btn {
+    width: 100%; margin-top: 16px; border: none; border-radius: 10px;
+    background: #2A2420; color: #FAF6F0; padding: 14px; font-size: 14px;
+    font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer;
+    transition: background .15s ease;
+  }
+  .copy-btn:hover { background: #A63D5C; }
+  .copy-btn:active { transform: scale(0.98); }
+  .toast {
+    display: none; text-align: center; font-size: 12.5px; color: #6B7A5E;
+    background: #EEF1E8; border: 1px solid #D8E0CE; border-radius: 8px;
+    padding: 10px; margin-top: 10px; font-family: 'Inter', sans-serif;
+  }
+  .toast.show { display: block; }
 </style>
 </head>
 <body>
@@ -114,6 +130,11 @@
     <div class="grid">
       <!-- LEFT PANEL -->
       <div class="panel">
+        <div class="field">
+          <div class="field-label-row"><label class="field-label">Client / project name</label></div>
+          <input class="client-input" type="text" id="clientName" placeholder="e.g. Ambiente Coffee — Memorias" />
+        </div>
+
         <div class="field">
           <div class="field-label-row"><label class="field-label">Your hourly rate</label></div>
           <div class="rate-row">
@@ -190,7 +211,7 @@
         <div class="receipt">
           <div class="receipt-header">
             <div class="receipt-brand">CupidsHunni Creative</div>
-            <div class="receipt-sub">PROJECT QUOTE</div>
+            <div class="receipt-sub" id="receiptSub">PROJECT QUOTE</div>
           </div>
           <div class="dashes"></div>
           <div id="lineItems"></div>
@@ -203,6 +224,8 @@
           <div class="dashes"></div>
           <div class="receipt-footer">Estimate only · terms confirmed on final invoice<br/>thank you for creating with me ♡</div>
         </div>
+        <button class="copy-btn" id="copyBtn" onclick="copyQuote()">Copy quote to send</button>
+        <div class="toast" id="toast">Copied ✓ paste it into a text or email</div>
       </div>
     </div>
   </div>
@@ -331,6 +354,8 @@ function renderAll() {
   renderComplexitySeg();
   document.getElementById('roundsVal').textContent = state.extraRounds;
   document.getElementById('hoursLabel').textContent = `Estimated hours — ${state.hours}h`;
+  const clientNameVal = document.getElementById('clientName').value.trim();
+  document.getElementById('receiptSub').textContent = clientNameVal ? clientNameVal.toUpperCase() : 'PROJECT QUOTE';
 
   const hourlyRate = Math.max(0, Number(document.getElementById('hourlyRate').value) || 0);
   const roundPrice = Math.max(0, Number(document.getElementById('roundPrice').value) || 0);
@@ -362,6 +387,66 @@ function renderAll() {
   document.getElementById('totalValue').textContent = fmt(finalTotal);
 }
 
+function copyQuote() {
+  const hourlyRate = Math.max(0, Number(document.getElementById('hourlyRate').value) || 0);
+  const roundPrice = Math.max(0, Number(document.getElementById('roundPrice').value) || 0);
+  const clientName = document.getElementById('clientName').value.trim() || 'Project Quote';
+  const project = PROJECT_TYPES.find(p => p.id === state.projectId);
+  const usage = USAGE.find(u => u.id === state.usageId);
+  const complexity = COMPLEXITY.find(c => c.id === state.complexityId);
+
+  const base = hourlyRate * state.hours;
+  const afterComplexity = base * complexity.mult;
+  const afterUsage = afterComplexity * usage.mult;
+  const rushFee = state.rush ? afterUsage * 0.25 : 0;
+  const revisionFee = state.extraRounds * roundPrice;
+  const total = afterUsage + rushFee + revisionFee;
+  const friendDiscount = state.friendRate ? total * 0.5 : 0;
+  const finalTotal = total - friendDiscount;
+
+  let lines = [];
+  lines.push(`CupidsHunni Creative — Quote`);
+  lines.push(clientName);
+  lines.push('');
+  lines.push(`${project.label} — ${state.hours}h × $${hourlyRate}/hr = ${fmt(base)}`);
+  lines.push(`Complexity: ${complexity.label} (×${complexity.mult}) → ${fmt(afterComplexity)}`);
+  lines.push(`Usage/licensing: ${usage.label} (×${usage.mult}) → ${fmt(afterUsage)}`);
+  if (state.rush) lines.push(`Rush turnaround (+25%): + ${fmt(rushFee)}`);
+  if (state.extraRounds > 0) lines.push(`Extra revisions (${state.extraRounds} × $${roundPrice}): + ${fmt(revisionFee)}`);
+  if (state.friendRate) lines.push(`Friends & growing-together rate (−50%): − ${fmt(friendDiscount)}`);
+  lines.push('');
+  lines.push(`TOTAL: ${fmt(finalTotal)}`);
+  lines.push('');
+  lines.push('Estimate only — terms confirmed on final invoice.');
+
+  const text = lines.join('\n');
+
+  const showToast = () => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(showToast).catch(() => fallbackCopy(text, showToast));
+  } else {
+    fallbackCopy(text, showToast);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  cb();
+}
+
 function lineItem(label, sub, value, dim) {
   return `<div class="line-item">
     <div><div class="line-label">${label}</div><div class="line-sub">${sub}</div></div>
@@ -369,6 +454,7 @@ function lineItem(label, sub, value, dim) {
   </div>`;
 }
 
+document.getElementById('clientName').addEventListener('input', renderAll);
 document.getElementById('hourlyRate').addEventListener('input', renderAll);
 document.getElementById('roundPrice').addEventListener('input', renderAll);
 document.getElementById('hoursSlider').addEventListener('input', (e) => {
